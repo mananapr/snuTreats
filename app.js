@@ -1,3 +1,4 @@
+
 var express = require("express");
 var app = express();
 var mysql = require('mysql')
@@ -18,7 +19,6 @@ app.use(bodyParser.json())
 
 
 connection.connect()
-
 
 //shops 
 app.get("/shops",function(req,res){
@@ -42,26 +42,47 @@ app.get("/shops/:id",function(req,res){
 	})
 });
 
+
+//individual item details
+app.get("/shops/:sid/item/:id",function(req,res){
+	var sid = req.params.sid;
+	var id = req.params.id;
+
+	connection.query('SELECT * FROM `menuItems` WHERE shop_id =? AND id =?',[sid,id],function(error,results,fields) {
+		console.log(results);
+		res.json(JSON.stringify(results));
+	})
+
+})
+
+
 //login route
 app.post("/login",function(req,res){
 		
 		
-		var uname = req.body.uname;
+		var uname = req.body.username;
 		var passd = req.body.password;
 		var flag = 0;
 		//console.log(req.body);
 			connection.query('SELECT * FROM `users`',function(error,results,fields){
-				results.forEach(function(tmp){
+				if(results.length > 0){
+					results.forEach(function(tmp){
 				
 					//console.log(tmp,passd);
 					bcrypt.compare(passd, tmp.password,function(err,result){
-						if(result==true)
+						if(result==true && flag==0)
 						{
 							flag = 1;
 							res.json(JSON.stringify(tmp));
 						}
 					});
 				});
+				} 
+				else {
+				res.send("No match found");
+
+				}
+
 			});
 			//res.send("No match found");
 	});
@@ -71,8 +92,8 @@ app.post("/login",function(req,res){
 app.post("/register",function(req,res){
 		
 		
-		var uname = req.body.uname;
-		var passd = req.body.passwd;
+		var uname = req.body.username;
+		var passd = req.body.password;
 
 		bcrypt.hash(passd,saltRounds,function(err,hash){
 			if(err)
